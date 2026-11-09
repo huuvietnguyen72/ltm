@@ -1,44 +1,52 @@
-package RMI;
+package RMIexample;
+
+import RMI.DataService;
 
 import java.rmi.Naming;
 import java.util.ArrayList;
 import java.util.List;
 
-public class RMIDataService {
+public class RMIData {
     public static void main(String[] args) throws Exception {
         DataService service = (DataService) Naming.lookup("rmi://36.50.135.242/RMIDataService");
 
         String studentCode = "B23DCCN919";
         String qCode = "7Le7CsWr";
 
-        // Server có thể trả về int[], Integer[], List hoặc String -> xử lý tất cả
-        Object raw = service.requestData(studentCode, qCode);
-        List<Integer> a = new ArrayList<>();
-        if (raw instanceof int[]) {
-            for (int x : (int[]) raw) a.add(x);
-        } else if (raw instanceof Integer[]) {
-            for (Integer x : (Integer[]) raw) a.add(x);
-        } else if (raw instanceof List) {
-            for (Object x : (List<?>) raw) a.add(((Number) x).intValue());
-        } else {
-            // Bỏ dấu [ ] và khoảng trắng, ví dụ "[3, 8, 5, 10, 7]"
-            String s = raw.toString().replaceAll("[\\[\\]\\s]", "");
-            for (String t : s.split(",")) {
-                if (!t.isEmpty()) a.add(Integer.parseInt(t));
+        Object object = service.requestData(studentCode, qCode);
+
+        int[] a = toIntArray(object);
+
+        List<Integer> peaks = new ArrayList<>();
+        int n = a.length;
+        for (int i = 0; i < n; i++) {
+            boolean leftOk  = (i == 0)     || a[i] > a[i - 1];
+            boolean rightOk = (i == n - 1) || a[i] > a[i + 1];
+            if (n > 1 && leftOk && rightOk) {
+                peaks.add(i + 1);
             }
         }
-        System.out.println("Data: " + a);
+        service.submitData(studentCode, qCode, peaks);
 
-        // Đỉnh cục bộ: lớn hơn các phần tử kề; phần tử đầu/cuối chỉ cần lớn hơn 1 phần tử kề
-        int n = a.size();
-        List<Integer> list = new ArrayList<>();
-        for (int i = 0; i < n; i++) {
-            boolean left = (i == 0) || a.get(i) > a.get(i - 1);
-            boolean right = (i == n - 1) || a.get(i) > a.get(i + 1);
-            if (left && right) list.add(i + 1); // vị trí tính từ 1
+    }
+
+    static int[] toIntArray(Object object){
+        if(object instanceof int[]){
+            return (int[]) object;
         }
-        System.out.println("Result: " + list);
 
-        service.submitData(studentCode, qCode, list);
+        if(object instanceof Integer[]){
+            Integer[] arr = (Integer[]) object;
+            int[] r = new int[arr.length];
+            for (int i=0; i< arr.length; i++) r[i] = arr[i];
+            return r;
+        }
+        if(object instanceof List){
+            List<?> list = (List<?>) object;
+            int[] r = new int[list.size()];
+            for(int i=0; i<r.length; i++) r[i] = ((Number) list.get(i)).intValue();
+            return r;
+        }
+        throw new IllegalArgumentException("Kieu khong ho tro: " + object.getClass());
     }
 }
