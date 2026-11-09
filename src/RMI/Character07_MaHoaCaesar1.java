@@ -1,0 +1,41 @@
+package RMI;
+
+/**
+ * RMI Character – Bài 7: MÃ HOÁ CAESAR -1
+ * Mã câu hỏi (qCode): j4rStb2a
+ *
+ * [Mã câu hỏi (qCode): j4rStb2a]. Một chương trình (tạm gọi là RMI Server) cung cấp giao diện cho phép triệu gọi từ xa để xử lý chuỗi. Cụ thể: Giao diện từ xa: public interface CharacterService extends Remote { public String requestCharacter(String studentCode, String qCode) throws RemoteException; public void submitCharacter(String studentCode, String qCode, String strSubmit) throws RemoteException; }
+ *
+ * Trong đó:
+ *
+ * - Interface CharacterService được viết trong package RMI.
+ * - Đối tượng cài đặt giao diện từ xa CharacterService được đăng ký với RegistryServer với tên là: RMICharacterService. Yêu cầu: Viết chương trình tại máy trạm (RMI client) để thực hiện các công việc sau với chuỗi được nhận từ RMI Server:
+ * a. Triệu gọi phương thức requestCharacter để nhận chuỗi ngẫu nhiên từ server.
+ * b. Thực hiện thao tác giải mã Caesar (mã hóa chuỗi bằng cách dịch từng ký tự đi một số lượng vị trí nhất định). Biết rằng giá trị dịch đúng bằng kích thước của chuỗi chia lấy dư cho 7.
+ * c. Triệu gọi phương thức submitCharacter để gửi chuỗi đã được giải mã trở lại server.
+ * d. Kết thúc chương trình client.
+ */
+
+import java.rmi.*;
+import java.rmi.registry.*;
+import java.util.*;
+import RMI.CharacterService;
+public class Character07_MaHoaCaesar1 {
+    public static void main(String[] args) throws Exception{
+        Registry rg = LocateRegistry.getRegistry("36.50.135.242", 1099);
+        CharacterService sv = (CharacterService) rg.lookup("RMICharacterService");
+        String s = sv.requestCharacter("B23DCCN139", "j4rStb2a");
+        System.out.println(s);
+        //b.
+        String ans = "";
+        int dich = s.length()%7;
+        for(char x: s.toCharArray()){
+            char base = Character.isUpperCase(x) ? 'A' : 'a';
+            x = (char) ((x - base - dich + 26) % 26 + base);
+            ans+=x;
+        }
+        System.out.println(ans);
+        //c.
+        sv.submitCharacter("B23DCCN139", "j4rStb2a", ans);
+    }
+}
